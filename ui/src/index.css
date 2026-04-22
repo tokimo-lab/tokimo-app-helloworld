@@ -5,6 +5,13 @@
 @import "tailwindcss/theme.css";
 @import "tailwindcss/utilities.css";
 
+/* Tokimo design tokens (CSS variables + accent palettes).
+ * When the app runs inside the shell these variables already exist on
+ * <html>, so this import is effectively a no-op (same vars, same values).
+ * When the app runs standalone (vite dev / Storybook), these definitions
+ * ensure <Button>, <Card>, etc. still get correct colors. */
+@import "@tokimo/ui/theme.css";
+
 /* Scan our own source — Tailwind v4 picks up co-located files automatically,
    but we still declare it so the build is deterministic. */
 @source "./**/*.{ts,tsx}";
