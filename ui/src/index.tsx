@@ -1,6 +1,6 @@
 import {
   type AppRuntimeCtx,
-  busCall,
+  appCall,
   type Dispose,
   defineApp,
   makeShellApi,
@@ -41,7 +41,7 @@ function HelloworldWindow({ ctx }: { ctx: AppRuntimeCtx }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await busCall<{ items: Item[] }>(SERVICE, "items.list", {});
+      const res = await appCall<{ items: Item[] }>(SERVICE, "items.list", {});
       setItems(res.items ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -60,7 +60,7 @@ function HelloworldWindow({ ctx }: { ctx: AppRuntimeCtx }) {
       if (!text) return;
       setError(null);
       try {
-        await busCall(SERVICE, notify ? "items.add_with_notify" : "items.add", {
+        await appCall(SERVICE, notify ? "items.add_with_notify" : "items.add", {
           content: text,
         });
         setContent("");
@@ -75,7 +75,7 @@ function HelloworldWindow({ ctx }: { ctx: AppRuntimeCtx }) {
   const remove = useCallback(
     async (id: string) => {
       try {
-        await busCall(SERVICE, "items.delete", { id });
+        await appCall(SERVICE, "items.delete", { id });
         await refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
@@ -178,6 +178,7 @@ export default defineApp({
     id: "helloworld",
     appName: "Hello World",
     icon: "Sparkles",
+    image: "icon.png",
     color: "#10b981",
     windowType: "helloworld",
     defaultSize: { width: 720, height: 560 },

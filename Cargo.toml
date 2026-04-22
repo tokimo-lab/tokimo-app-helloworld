@@ -22,6 +22,9 @@ sqlx               = { version = "0.8", default-features = false, features = ["r
 rust-embed         = { version = "8", features = ["debug-embed"] }
 mime_guess         = "2"
 anyhow             = "1"
+hyper = { version = "1", features = ["server", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio", "server", "http1"] }
+http-body-util = "0.1"
 
 [profile.release]
 lto       = "thin"

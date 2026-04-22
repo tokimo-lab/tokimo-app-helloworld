@@ -8,13 +8,14 @@
 //! - Serves embedded UI assets (with `TOKIMO_APP_ASSETS_DIR` dev override)
 
 mod assets;
+mod data_plane;
 mod db;
 mod handlers;
 
 use std::sync::{Arc, OnceLock};
 
 use tokimo_bus_client::{BusClient, ClientConfig};
-use tokimo_bus_protocol::MethodDecl;
+use tokimo_bus_protocol::{HttpMethod, MethodDecl};
 use tracing::{error, info};
 
 #[tokio::main]
@@ -48,7 +49,12 @@ async fn run() -> anyhow::Result<()> {
         client: Arc::clone(&client_slot),
     });
 
-    let client = build_client(cfg, Arc::clone(&ctx))
+    // 数据面 socket 必须在 build_client 之前起来，才能把路径报给 broker。
+    let data_plane_socket = data_plane::spawn("helloworld")
+        .await
+        .map_err(|e| anyhow::anyhow!("data_plane spawn: {e}"))?;
+
+    let client = build_client(cfg, Arc::clone(&ctx), data_plane_socket)
         .await
         .map_err(|e| anyhow::anyhow!("bus build: {e}"))?;
     client_slot
@@ -76,6 +82,7 @@ async fn run() -> anyhow::Result<()> {
 async fn build_client(
     cfg: ClientConfig,
     ctx: Arc<handlers::AppCtx>,
+    data_plane_socket: tokimo_bus_protocol::DataPlaneSocket,
 ) -> Result<Arc<BusClient>, tokimo_bus_protocol::BusError> {
     let ctx_list = Arc::clone(&ctx);
     let ctx_add = Arc::clone(&ctx);
@@ -84,40 +91,53 @@ async fn build_client(
 
     BusClient::builder(cfg)
         .service("helloworld", env!("CARGO_PKG_VERSION"))
+        .data_plane(data_plane_socket)
         .method(MethodDecl {
             name: "echo".into(),
             requires_auth: false,
             streaming: false,
+            http_method: HttpMethod::Post,
+            path: None,
             description: Some("Returns the request payload unchanged.".into()),
         })
         .method(MethodDecl {
             name: "greet".into(),
             requires_auth: false,
             streaming: false,
+            http_method: HttpMethod::Post,
+            path: None,
             description: Some("Returns a JSON greeting for `{ name }`.".into()),
         })
         .method(MethodDecl {
             name: "items.list".into(),
             requires_auth: false,
             streaming: false,
+            http_method: HttpMethod::Post,
+            path: None,
             description: Some("List recent items.".into()),
         })
         .method(MethodDecl {
             name: "items.add".into(),
             requires_auth: false,
             streaming: false,
+            http_method: HttpMethod::Post,
+            path: None,
             description: Some("Insert an item: { content }.".into()),
         })
         .method(MethodDecl {
             name: "items.delete".into(),
             requires_auth: false,
             streaming: false,
+            http_method: HttpMethod::Post,
+            path: None,
             description: Some("Delete an item: { id }.".into()),
         })
         .method(MethodDecl {
             name: "items.add_with_notify".into(),
             requires_auth: true,
             streaming: false,
+            http_method: HttpMethod::Post,
+            path: None,
             description: Some(
                 "Insert an item, then emit a notification via notification_center.".into(),
             ),
@@ -126,6 +146,8 @@ async fn build_client(
             name: "assets.get".into(),
             requires_auth: false,
             streaming: false,
+            http_method: HttpMethod::Get,
+            path: None,
             description: Some("Return embedded UI asset by relative path.".into()),
         })
         .on_invoke("echo", |req| async move { Ok(req.payload) })
