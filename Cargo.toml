@@ -4,18 +4,24 @@ version     = "0.1.0"
 edition     = "2024"
 rust-version = "1.85"
 license     = "MIT OR Apache-2.0"
-description = "Reference Tokimo app: demonstrates the tokimo-bus client SDK."
+description = "Reference Tokimo app: multi-process pilot with DB + components + notifications."
 repository  = "https://github.com/tokimo-lab/tokimo-app-helloworld"
 
 [dependencies]
-tokimo-bus-client   = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "e4cb3eb067225d52a2a1b094b79a0584b7923939" }
-tokimo-bus-protocol = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "e4cb3eb067225d52a2a1b094b79a0584b7923939" }
+tokimo-bus-client   = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "77087d91f518745f611e93d1b5b1871fc47f10d7" }
+tokimo-bus-protocol = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "77087d91f518745f611e93d1b5b1871fc47f10d7" }
 
 tokio              = { version = "1", features = ["rt-multi-thread", "macros", "time", "signal"] }
 tracing            = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 serde              = { version = "1", features = ["derive"] }
 serde_json         = "1"
+uuid               = { version = "1", features = ["v4", "serde"] }
+chrono             = { version = "0.4", features = ["serde"] }
+sqlx               = { version = "0.8", default-features = false, features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "macros"] }
+rust-embed         = { version = "8", features = ["debug-embed"] }
+mime_guess         = "2"
+anyhow             = "1"
 
 [profile.release]
 lto       = "thin"

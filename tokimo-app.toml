@@ -1,0 +1,13 @@
+# Tokimo app manifest（供主 server 读取，注册 / spawn / 资源代理）
+[app]
+id          = "helloworld"
+display     = "Helloworld"
+version     = "0.1.0"
+description = "Tokimo 多进程架构试点 app"
+
+[runtime]
+lifecycle    = "resident"   # resident | on_demand | one_shot
+db_schema    = "helloworld" # 主 server spawn 时注入 DB_SCHEMA env
+
+[ui]
+entry        = "assets/index.js"
