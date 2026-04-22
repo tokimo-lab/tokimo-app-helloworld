@@ -148,10 +148,11 @@ pub async fn items_add_with_notify(
     let notify_payload = serde_json::json!({
         "user_id": req.caller.user_id,
         "app_id": "helloworld",
+        "category_id": "item_added",
+        "category_label": "helloworld.notifications.itemAdded",
         "title": "Helloworld",
         "body": format!("New item added: {}", row.1),
         "level": "info",
-        "show_toast": true,
     });
     let bytes = serde_json::to_vec(&notify_payload).map_err(|e| BusError::Internal(e.to_string()))?;
 

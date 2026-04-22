@@ -87,10 +87,11 @@ function HelloworldWindow({ ctx }: { ctx: AppRuntimeCtx }) {
   const notifyOnly = useCallback(async () => {
     try {
       await ctx.shell.notify({
+        categoryId: "manual",
+        categoryLabel: "helloworld.notifications.manual",
         title: t("notifyTitle"),
         body: t("notifyBody"),
         level: "info",
-        showToast: true,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -188,7 +189,7 @@ export default defineApp({
     const locale = ctx.locale.startsWith("zh") ? uiZhCN : uiEnUS;
     // Re-bind the shell-provided notify into the SDK's ShellApi shape
     // (apps may also use `makeShellApi()` directly to call notification_center).
-    const shell = ctx.shell ?? makeShellApi();
+    const shell = ctx.shell ?? makeShellApi(ctx.appId);
     const fullCtx: AppRuntimeCtx = { ...ctx, shell };
     root.render(
       <StrictMode>
