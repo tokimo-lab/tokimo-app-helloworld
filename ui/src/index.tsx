@@ -2,7 +2,6 @@ import {
   type AppRuntimeCtx,
   type Dispose,
   defineApp,
-  makeShellApi,
   makeTranslator,
 } from "@tokimo/app-sdk";
 import {
@@ -199,10 +198,8 @@ export default defineApp({
   mount(container, ctx): Dispose {
     const root: Root = createRoot(container);
     const locale = ctx.locale.startsWith("zh") ? uiZhCN : uiEnUS;
-    // Re-bind the shell-provided notify into the SDK's ShellApi shape
-    // (apps may also use `makeShellApi()` directly to call notification_center).
-    const shell = ctx.shell ?? makeShellApi(ctx.appId);
-    const fullCtx: AppRuntimeCtx = { ...ctx, shell };
+    // shell adapter must inject the full ShellApi (media / menubar / toast / windowNav).
+    const fullCtx: AppRuntimeCtx = ctx;
     root.render(
       <StrictMode>
         <ConfigProvider
