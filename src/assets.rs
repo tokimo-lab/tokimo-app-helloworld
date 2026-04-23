@@ -1,39 +1,56 @@
-//! UI asset serving.
-//!
-//! Production: assets are bundled via `rust-embed!` at build time.
-//! Dev override: if `TOKIMO_APP_ASSETS_DIR` is set, files are read from disk
-//!  so the app author can iterate on the UI without rebuilding cargo.
+//! 静态资源 — embed 优先，dev 模式可用 `TOKIMO_APP_ASSETS_DIR` 覆盖。
 
+use axum::{
+    body::Bytes,
+    extract::Path,
+    http::{StatusCode, header},
+    response::{IntoResponse, Response},
+};
 use rust_embed::RustEmbed;
-use serde::Deserialize;
-use tokimo_bus_protocol::BusError;
 
 #[derive(RustEmbed)]
 #[folder = "ui/dist/"]
 #[prefix = ""]
 struct EmbeddedUi;
 
-#[derive(Deserialize)]
-struct GetReq {
-    path: String,
-}
-
-pub async fn handle(payload: Vec<u8>) -> Result<Vec<u8>, BusError> {
-    let GetReq { path } = serde_json::from_slice(&payload)
-        .map_err(|e| BusError::BadRequest(format!("assets.get: {e}")))?;
-
+pub async fn serve(Path(path): Path<String>) -> Response {
     let normalised = normalise(&path);
 
-    if let Ok(dir) = std::env::var("TOKIMO_APP_ASSETS_DIR") {
+    let bytes: Bytes = if let Ok(dir) = std::env::var("TOKIMO_APP_ASSETS_DIR") {
         let full = std::path::Path::new(&dir).join(&normalised);
-        return tokio::fs::read(&full)
-            .await
-            .map_err(|e| BusError::Internal(format!("asset {normalised}: {e}")));
-    }
+        match tokio::fs::read(&full).await {
+            Ok(b) => Bytes::from(b),
+            Err(e) => {
+                return (
+                    StatusCode::NOT_FOUND,
+                    format!("asset {normalised}: {e}"),
+                )
+                    .into_response();
+            }
+        }
+    } else {
+        match EmbeddedUi::get(&normalised) {
+            Some(f) => Bytes::from(f.data.into_owned()),
+            None => {
+                return (
+                    StatusCode::NOT_FOUND,
+                    format!("embedded asset not found: {normalised}"),
+                )
+                    .into_response();
+            }
+        }
+    };
 
-    EmbeddedUi::get(&normalised)
-        .map(|f| f.data.into_owned())
-        .ok_or_else(|| BusError::Internal(format!("embedded asset not found: {normalised}")))
+    let mime = mime_for_path(&normalised);
+    (
+        StatusCode::OK,
+        [
+            (header::CONTENT_TYPE, mime),
+            (header::CACHE_CONTROL, "no-store".to_string()),
+        ],
+        bytes,
+    )
+        .into_response()
 }
 
 fn normalise(path: &str) -> String {
@@ -43,4 +60,24 @@ fn normalise(path: &str) -> String {
     } else {
         trimmed.to_string()
     }
+}
+
+fn mime_for_path(path: &str) -> String {
+    let ext = path.rsplit('.').next().unwrap_or("").to_ascii_lowercase();
+    match ext.as_str() {
+        "js" | "mjs" => "application/javascript",
+        "css" => "text/css",
+        "html" | "htm" => "text/html; charset=utf-8",
+        "json" => "application/json",
+        "svg" => "image/svg+xml",
+        "png" => "image/png",
+        "jpg" | "jpeg" => "image/jpeg",
+        "webp" => "image/webp",
+        "ico" => "image/x-icon",
+        "wasm" => "application/wasm",
+        "woff" => "font/woff",
+        "woff2" => "font/woff2",
+        _ => "application/octet-stream",
+    }
+    .to_string()
 }

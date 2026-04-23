@@ -1,6 +1,5 @@
 import {
   type AppRuntimeCtx,
-  appCall,
   type Dispose,
   defineApp,
   makeShellApi,
@@ -41,7 +40,11 @@ function HelloworldWindow({ ctx }: { ctx: AppRuntimeCtx }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await appCall<{ items: Item[] }>(SERVICE, "items.list", {});
+      const r = await fetch(`/api/apps/${SERVICE}/items`, {
+        credentials: "include",
+      });
+      if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
+      const res = (await r.json()) as { items: Item[] };
       setItems(res.items ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -60,9 +63,16 @@ function HelloworldWindow({ ctx }: { ctx: AppRuntimeCtx }) {
       if (!text) return;
       setError(null);
       try {
-        await appCall(SERVICE, notify ? "items.add_with_notify" : "items.add", {
-          content: text,
+        const url = notify
+          ? `/api/apps/${SERVICE}/items/notify`
+          : `/api/apps/${SERVICE}/items`;
+        const r = await fetch(url, {
+          method: "POST",
+          credentials: "include",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ content: text }),
         });
+        if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
         setContent("");
         await refresh();
       } catch (e) {
@@ -75,7 +85,11 @@ function HelloworldWindow({ ctx }: { ctx: AppRuntimeCtx }) {
   const remove = useCallback(
     async (id: string) => {
       try {
-        await appCall(SERVICE, "items.delete", { id });
+        const r = await fetch(
+          `/api/apps/${SERVICE}/items/${encodeURIComponent(id)}`,
+          { method: "DELETE", credentials: "include" },
+        );
+        if (!r.ok) throw new Error(`${r.status} ${await r.text()}`);
         await refresh();
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
@@ -99,10 +113,7 @@ function HelloworldWindow({ ctx }: { ctx: AppRuntimeCtx }) {
   }, [ctx.shell, t]);
 
   return (
-    <div
-      className="flex h-full w-full flex-col gap-4 overflow-auto p-6 text-[var(--text-primary)]"
-      style={{ background: "var(--bg-base)" }}
-    >
+    <div className="flex h-full w-full flex-col gap-4 overflow-auto p-6 text-[var(--text-primary)]">
       <header className="flex items-center gap-3">
         <Sparkles size={28} className="text-emerald-500" />
         <div>

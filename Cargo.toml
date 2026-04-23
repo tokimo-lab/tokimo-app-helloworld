@@ -25,6 +25,8 @@ anyhow             = "1"
 hyper = { version = "1", features = ["server", "http1"] }
 hyper-util = { version = "0.1", features = ["tokio", "server", "http1"] }
 http-body-util = "0.1"
+axum = { version = "0.8", features = ["json"] }
+tower = "0.5"
 
 [profile.release]
 lto       = "thin"
