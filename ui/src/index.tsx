@@ -1,5 +1,5 @@
 /**
- * Hello World sample app — exhaustive demo / playground for @tokimo/app-sdk.
+ * Hello World sample app — exhaustive demo / playground for @tokimo/sdk.
  *
  * Layout: Master-Detail. Left sidebar is a searchable, categorized list of
  * "demos"; right area renders the selected demo's description + live state
@@ -13,7 +13,7 @@ import {
   defineApp,
   type MenuBarConfig,
   makeTranslator,
-} from "@tokimo/app-sdk";
+} from "@tokimo/sdk";
 import {
   useShellAppearance,
   useShellMedia,
@@ -21,7 +21,7 @@ import {
   useShellMenuBar,
   useShellToast,
   useShellWindowNav,
-} from "@tokimo/app-sdk/react";
+} from "@tokimo/sdk/react";
 import {
   Button,
   Card,
