@@ -12,6 +12,17 @@ export const zhCN: Record<string, string> = {
   error: "请求失败：",
   notifyTitle: "Hello World",
   notifyBody: "来自三方 App 的问候 👋",
+  notifyFromMenu: "来自菜单栏的通知",
+  addedToast: "已添加 ✅",
+  probeTitle: "SDK 实时探针",
+  menuLabel: "Hello",
+  menuToast: "弹出 toast",
+  menuToastMsg: "来自菜单栏的 toast",
+  menuNotify: "发送通知",
+  menuGoBack: "后退",
+  menuHint: "聚焦本窗口后看顶部菜单栏",
+  searchPlaceholder: "搜索 API…",
+  noMatch: "无匹配结果",
 };
 
 export const enUS: Record<string, string> = {
@@ -28,4 +39,15 @@ export const enUS: Record<string, string> = {
   error: "Request failed: ",
   notifyTitle: "Hello World",
   notifyBody: "Greetings from a third-party app 👋",
+  notifyFromMenu: "Notification fired from the menubar",
+  addedToast: "Added ✅",
+  probeTitle: "Live SDK probe",
+  menuLabel: "Hello",
+  menuToast: "Show toast",
+  menuToastMsg: "Toast from the menubar",
+  menuNotify: "Send notification",
+  menuGoBack: "Back",
+  menuHint: "Focus this window to see the top menu bar",
+  searchPlaceholder: "Search APIs…",
+  noMatch: "No matches",
 };
