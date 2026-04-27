@@ -76,8 +76,20 @@ import { defineTokimoApp } from "@tokimo/app-builder/vite";
 export default defineTokimoApp({ extraExternal: ["some-shared-lib"] });
 ```
 
-> 当前依赖 `workspace:*` 解析，必须在主仓内开发。脱离主仓独立开发的方案（git
-> 依赖 / dev-only assets 注册接口）规划在 `@tokimo/app-builder` 后续阶段。
+### 独立开发（不依赖主仓）
+
+这个 app 可以脱离 tokimo 主仓 clone 后直接 dev：
+
+```bash
+git clone git@github.com:tokimo-lab/tokimo-app-helloworld.git
+cd tokimo-app-helloworld/ui
+pnpm install   # 拉 @tokimo/ui / @tokimo/sdk / @tokimo/app-builder 的 git 源码
+pnpm dev       # vite watch
+```
+
+主仓内开发时，`ui/.pnpmfile.cjs` 会自动检测主仓上下文（往上找
+`packages/tokimo-app-builder/package.json`），把这三个依赖改写为 `file:`
+路径直接 link 到主仓 submodule，无需 bump sha 即可看到 ui/sdk 的修改。
 
 ## License
 
