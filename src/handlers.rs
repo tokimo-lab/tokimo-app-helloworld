@@ -99,9 +99,7 @@ pub struct ItemsListResp {
     items: Vec<ItemDto>,
 }
 
-pub async fn items_list(
-    State(ctx): State<Arc<AppCtx>>,
-) -> Result<Json<ItemsListResp>, AppError> {
+pub async fn items_list(State(ctx): State<Arc<AppCtx>>) -> Result<Json<ItemsListResp>, AppError> {
     let rows = sqlx::query_as::<_, (Uuid, String, DateTime<Utc>)>(
         "SELECT id, content, created_at FROM items ORDER BY created_at DESC LIMIT 100",
     )
@@ -124,10 +122,7 @@ pub struct AddReq {
     content: String,
 }
 
-pub async fn items_add(
-    State(ctx): State<Arc<AppCtx>>,
-    Json(req): Json<AddReq>,
-) -> Result<Json<ItemDto>, AppError> {
+pub async fn items_add(State(ctx): State<Arc<AppCtx>>, Json(req): Json<AddReq>) -> Result<Json<ItemDto>, AppError> {
     if req.content.trim().is_empty() {
         return Err(AppError::bad_request("content is empty"));
     }
@@ -149,10 +144,7 @@ pub struct DeleteResp {
     deleted: u64,
 }
 
-pub async fn items_delete(
-    State(ctx): State<Arc<AppCtx>>,
-    Path(id): Path<Uuid>,
-) -> Result<Json<DeleteResp>, AppError> {
+pub async fn items_delete(State(ctx): State<Arc<AppCtx>>, Path(id): Path<Uuid>) -> Result<Json<DeleteResp>, AppError> {
     let res = sqlx::query("DELETE FROM items WHERE id = $1")
         .bind(id)
         .execute(&ctx.pool)
@@ -209,8 +201,8 @@ pub async fn items_add_with_notify(
         "body": format!("New item added: {}", row.1),
         "level": "info",
     });
-    let bytes = serde_json::to_vec(&notify_payload)
-        .map_err(|e| AppError::internal(format!("serialize notify: {e}")))?;
+    let bytes =
+        serde_json::to_vec(&notify_payload).map_err(|e| AppError::internal(format!("serialize notify: {e}")))?;
 
     info!(item_id = %dto.id, "helloworld: dispatching notification_center.notify");
     if let Err(e) = client

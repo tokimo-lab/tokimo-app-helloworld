@@ -11,8 +11,7 @@ use tracing::{debug, info};
 const MIGRATIONS: &[(&str, &str)] = &[("0001_init", include_str!("../migrations/0001_init.sql"))];
 
 pub async fn init_pool() -> anyhow::Result<PgPool> {
-    let url = std::env::var("DATABASE_URL")
-        .map_err(|_| anyhow::anyhow!("DATABASE_URL is required"))?;
+    let url = std::env::var("DATABASE_URL").map_err(|_| anyhow::anyhow!("DATABASE_URL is required"))?;
     let schema = std::env::var("DB_SCHEMA").unwrap_or_else(|_| "helloworld".to_string());
 
     info!(schema = %schema, "helloworld: connecting to postgres");
