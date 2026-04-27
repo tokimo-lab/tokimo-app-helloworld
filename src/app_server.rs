@@ -12,8 +12,6 @@
 //!
 //! 单 sock 同时承载控制面 + 数据面 + 资源面，server 侧只需一条反代规则。
 
-#[cfg(unix)]
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use axum::{
@@ -26,43 +24,9 @@ use tracing::{error, info};
 
 use crate::{assets, handlers, handlers::AppCtx};
 
-/// 根据 broker socket 路径推出 app 自己的 sock 路径。
-#[cfg(unix)]
-fn default_socket_path(service: &str) -> anyhow::Result<PathBuf> {
-    let bus = std::env::var("TOKIMO_BUS_SOCKET").map_err(|_| anyhow::anyhow!("TOKIMO_BUS_SOCKET not set"))?;
-    let parent = PathBuf::from(&bus)
-        .parent()
-        .ok_or_else(|| anyhow::anyhow!("TOKIMO_BUS_SOCKET has no parent"))?
-        .to_path_buf();
-    let apps_dir = parent.join("apps");
-    std::fs::create_dir_all(&apps_dir)?;
-    Ok(apps_dir.join(format!("{service}.sock")))
-}
-
-/// 为当前进程生成一个命名管道名称。
-#[cfg(windows)]
-fn default_pipe_name(service: &str) -> String {
-    format!("tokimo-app-{}-{}", service, std::process::id())
-}
-
 /// 起 axum server 监听本地 socket，返回 `DataPlaneSocket` 用于上报 broker。
 pub async fn spawn(service: &str, ctx: Arc<AppCtx>) -> anyhow::Result<DataPlaneSocket> {
-    // 构造 socket 描述符
-    #[cfg(unix)]
-    let socket = {
-        let path = default_socket_path(service)?;
-        let _ = std::fs::remove_file(&path);
-        DataPlaneSocket::Unix {
-            path: path.to_string_lossy().into_owned(),
-        }
-    };
-
-    #[cfg(windows)]
-    let socket = DataPlaneSocket::NamedPipe {
-        name: default_pipe_name(service),
-    };
-
-    let mut listener = BusListener::bind(&socket)?;
+    let (mut listener, socket) = BusListener::bind_for_app(service)?;
     info!(?socket, "helloworld: app server listening");
 
     let app = build_router(ctx).into_make_service();

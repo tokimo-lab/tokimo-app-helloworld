@@ -8,8 +8,8 @@ description = "Reference Tokimo app: multi-process pilot with DB + components + 
 repository  = "https://github.com/tokimo-lab/tokimo-app-helloworld"
 
 [dependencies]
-tokimo-bus-client   = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "ae2d7322757acde2fca9394e75cc53856c4eda04" }
-tokimo-bus-protocol = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "ae2d7322757acde2fca9394e75cc53856c4eda04" }
+tokimo-bus-client   = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "8b4fbac4ab2657cdeead0e74c6caa443a0980f4f" }
+tokimo-bus-protocol = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "8b4fbac4ab2657cdeead0e74c6caa443a0980f4f" }
 
 tokio              = { version = "1", features = ["rt-multi-thread", "macros", "time", "signal"] }
 tracing            = "0.1"
