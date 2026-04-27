@@ -58,6 +58,27 @@ pnpm -C apps/tokimo-app-helloworld/ui build --watch
 # 浏览器强刷即可生效
 ```
 
+#### UI 构建配置：`@tokimo/app-builder`
+
+`ui/vite.config.ts` 只有一行 `defineTokimoApp()`，完整的 library 模式 + externals
+配置由共享预设 [`@tokimo/app-builder`](https://github.com/tokimo-lab/tokimo)
+（主仓 `packages/tokimo-app-builder/`）提供：
+
+- **externals**：`react` / `react-dom` / `@tokimo/ui` / `@tokimo/sdk` 全部不打进 bundle，
+  由主 shell 通过 `<script type="importmap">` + `window.__TKM_DEPS__` 注入同一份实例
+  （否则跨边界 React hooks 会断）
+- **产物**：`dist/index.js` + `dist/index.css`，被主 server 反代到 `/api/apps/<id>/assets/`
+
+如需特殊 vite 配置（额外 plugin / overrides），传入 options：
+
+```ts
+import { defineTokimoApp } from "@tokimo/app-builder/vite";
+export default defineTokimoApp({ extraExternal: ["some-shared-lib"] });
+```
+
+> 当前依赖 `workspace:*` 解析，必须在主仓内开发。脱离主仓独立开发的方案（git
+> 依赖 / dev-only assets 注册接口）规划在 `@tokimo/app-builder` 后续阶段。
+
 ## License
 
 MIT OR Apache-2.0.
