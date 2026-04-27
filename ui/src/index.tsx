@@ -44,6 +44,7 @@ import {
 import { createRoot, type Root } from "react-dom/client";
 import { enUS, zhCN } from "./i18n";
 import "./index.css";
+import { ViewerDemoPanel } from "./viewer-demo";
 
 interface Item {
   id: string;
@@ -516,6 +517,13 @@ const DEMOS: DemoEntry[] = [
     title: "Items CRUD",
     api: "/api/apps/helloworld/items",
     Component: ItemsCrudDemo,
+  },
+  {
+    id: "viewer-demo",
+    category: "Demo App",
+    title: "Viewer panel",
+    api: "import { ... } from '@tokimo/sdk/viewers'",
+    Component: ViewerDemoPanel,
   },
 ];
 
