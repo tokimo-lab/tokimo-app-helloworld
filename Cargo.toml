@@ -9,7 +9,7 @@ repository  = "https://github.com/tokimo-lab/tokimo-app-helloworld"
 
 [dependencies]
 tokimo-bus-client   = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "8b4fbac4ab2657cdeead0e74c6caa443a0980f4f" }
-tokimo-bus-protocol = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "8b4fbac4ab2657cdeead0e74c6caa443a0980f4f" }
+tokimo-bus-protocol = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "8b4fbac4ab2657cdeead0e74c6caa443a0980f4f", features = ["axum"] }
 
 tokio              = { version = "1", features = ["rt-multi-thread", "macros", "time", "signal"] }
 tracing            = "0.1"
@@ -22,11 +22,7 @@ sqlx               = { version = "0.8", default-features = false, features = ["r
 rust-embed         = { version = "8", features = ["debug-embed"] }
 mime_guess         = "2"
 anyhow             = "1"
-hyper = { version = "1", features = ["server", "http1"] }
-hyper-util = { version = "0.1", features = ["tokio", "server", "http1"] }
-http-body-util = "0.1"
 axum = { version = "0.8", features = ["json"] }
-tower = "0.5"
 
 [profile.release]
 lto       = "thin"
