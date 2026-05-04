@@ -24,10 +24,6 @@ mime_guess         = "2"
 anyhow             = "1"
 axum = { version = "0.8", features = ["json"] }
 
-[patch."https://github.com/tokimo-lab/tokimo-bus.git"]
-tokimo-bus-protocol = { path = "../../packages/tokimo-bus/crates/protocol" }
-tokimo-bus-client   = { path = "../../packages/tokimo-bus/crates/client" }
-
 [profile.release]
 lto       = "thin"
 opt-level = 3
