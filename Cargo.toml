@@ -2,7 +2,7 @@
 name        = "tokimo-app-helloworld"
 version     = "0.1.0"
 edition     = "2024"
-rust-version = "1.85"
+rust-version = "1.94.0"
 license     = "MIT OR Apache-2.0"
 description = "Reference Tokimo app: multi-process pilot with DB + components + notifications."
 repository  = "https://github.com/tokimo-lab/tokimo-app-helloworld"
