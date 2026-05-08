@@ -40,10 +40,10 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
-    /// 管理 helloworld items
+    /// 管理 helloworld items (子命令: list / add / update / delete)
     #[command(subcommand, long_about = "管理 helloworld items", term_width = 100)]
     Items(ItemsCmd),
-    /// 调用 helloworld 的 POST /greet。
+    /// 打印问候语 — 用法: greet <NAME>
     ///
     /// 示例:
     ///   tokimo-app-helloworld --tokimo-token mm_xxx greet Alice
@@ -53,30 +53,41 @@ enum Command {
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum ItemsCmd {
-    /// 列出最近 100 条 item。
+    /// 列出最近 100 条 item — 用法: list
     ///
     /// 示例:
     ///   tokimo-app-helloworld --tokimo-token mm_xxx items list
     #[command(verbatim_doc_comment)]
     List,
-    /// 新增一条 item。
+    /// 新增一条 item — 用法: add <CONTENT>
     ///
     /// 示例:
     ///   tokimo-app-helloworld --tokimo-token mm_xxx items add "hello tokimo"
     #[command(verbatim_doc_comment)]
-    Add { content: String },
-    /// 更新指定 item 的 content。
+    Add {
+        /// item 内容（非空字符串）
+        content: String,
+    },
+    /// 更新 item 内容 — 用法: update <ID> <CONTENT>
     ///
     /// 示例:
     ///   tokimo-app-helloworld --tokimo-token mm_xxx items update 018f... "updated content"
     #[command(verbatim_doc_comment)]
-    Update { id: uuid::Uuid, content: String },
-    /// 删除指定 item。
+    Update {
+        /// item ID (UUID)
+        id: uuid::Uuid,
+        /// 新内容
+        content: String,
+    },
+    /// 删除指定 item — 用法: delete <ID>
     ///
     /// 示例:
     ///   tokimo-app-helloworld --tokimo-token mm_xxx items delete 018f...
     #[command(verbatim_doc_comment)]
-    Delete { id: uuid::Uuid },
+    Delete {
+        /// item ID (UUID)
+        id: uuid::Uuid,
+    },
 }
 
 #[tokio::main]
