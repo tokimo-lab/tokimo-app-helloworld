@@ -10,7 +10,9 @@ repository  = "https://github.com/tokimo-lab/tokimo-app-helloworld"
 [dependencies]
 tokimo-bus-client   = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "dfb4c5af9a2e2425d6f2685e55064eab82530082" }
 tokimo-bus-protocol = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "dfb4c5af9a2e2425d6f2685e55064eab82530082", features = ["axum"] }
+tokimo-bus-auth     = { path = "../../packages/tokimo-bus/crates/auth" }
 
+clap              = { version = "4", features = ["derive", "env"] }
 tokio              = { version = "1", features = ["rt-multi-thread", "macros", "time", "signal"] }
 tracing            = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

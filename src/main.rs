@@ -13,30 +13,107 @@
 
 mod app_server;
 mod assets;
+mod cli;
 mod db;
 mod handlers;
 
 use std::sync::{Arc, OnceLock};
 
+use clap::{Parser, Subcommand};
+use tokimo_bus_auth::cli::TokimoAuthArgs;
 use tokimo_bus_client::{BusClient, ClientConfig};
 use tracing::{error, info};
 
-#[tokio::main]
-async fn main() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info,tokimo_bus_client=info,tokimo_app_helloworld=debug".into()),
-        )
-        .init();
-
-    if let Err(e) = run().await {
-        error!(error = %e, "helloworld: fatal");
-        std::process::exit(1);
-    }
+#[derive(Parser, Debug)]
+#[command(
+    name = "tokimo-app-helloworld",
+    about = "Helloworld — Tokimo 子 app CLI",
+    long_about = "Helloworld CLI — 通过 Tokimo 主 server 调用 helloworld app。\n\n前置条件：\n1. 启动 Tokimo 主 server (默认 http://localhost:5678)\n2. 浏览器登录后，去「设置 → API Keys」创建一个 token (mm_xxx)\n3. 把 token 通过 --tokimo-token 或 TOKIMO_TOKEN env 传入",
+    term_width = 100
+)]
+struct Cli {
+    #[command(flatten)]
+    auth: TokimoAuthArgs,
+    #[command(subcommand)]
+    command: Option<Command>,
 }
 
-async fn run() -> anyhow::Result<()> {
+#[derive(Subcommand, Debug)]
+enum Command {
+    /// 管理 helloworld items
+    #[command(subcommand, long_about = "管理 helloworld items", term_width = 100)]
+    Items(ItemsCmd),
+    /// 调用 helloworld 的 POST /greet。
+    ///
+    /// 示例:
+    ///   tokimo-app-helloworld --tokimo-token mm_xxx greet Alice
+    #[command(verbatim_doc_comment)]
+    Greet { name: String },
+}
+
+#[derive(Subcommand, Debug)]
+pub(crate) enum ItemsCmd {
+    /// 列出最近 100 条 item。
+    ///
+    /// 示例:
+    ///   tokimo-app-helloworld --tokimo-token mm_xxx items list
+    #[command(verbatim_doc_comment)]
+    List,
+    /// 新增一条 item。
+    ///
+    /// 示例:
+    ///   tokimo-app-helloworld --tokimo-token mm_xxx items add "hello tokimo"
+    #[command(verbatim_doc_comment)]
+    Add { content: String },
+    /// 更新指定 item 的 content。
+    ///
+    /// 示例:
+    ///   tokimo-app-helloworld --tokimo-token mm_xxx items update 018f... "updated content"
+    #[command(verbatim_doc_comment)]
+    Update { id: uuid::Uuid, content: String },
+    /// 删除指定 item。
+    ///
+    /// 示例:
+    ///   tokimo-app-helloworld --tokimo-token mm_xxx items delete 018f...
+    #[command(verbatim_doc_comment)]
+    Delete { id: uuid::Uuid },
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let Cli { auth, command } = Cli::parse();
+
+    match command {
+        None => {
+            // server 模式：由 supervisor 无参拉起，初始化 tracing
+            tracing_subscriber::fmt()
+                .with_env_filter(
+                    tracing_subscriber::EnvFilter::try_from_default_env()
+                        .unwrap_or_else(|_| "info,tokimo_bus_client=info,tokimo_app_helloworld=debug".into()),
+                )
+                .init();
+            if let Err(error) = run_server().await {
+                error!(%error, "helloworld: fatal");
+                std::process::exit(1);
+            }
+        }
+        Some(cmd) => {
+            // CLI 模式：纯文本错误，不输出 tracing 日志
+            let result = match cmd {
+                Command::Items(c) => cli::run_items(auth, c).await,
+                Command::Greet { name } => cli::run_greet(auth, name).await,
+            };
+            if let Err(error) = result {
+                eprintln!("Error: {error:#}");
+                std::process::exit(1);
+            }
+        }
+    }
+
+    Ok(())
+}
+
+async fn run_server() -> anyhow::Result<()> {
     let cfg = ClientConfig::from_env().map_err(|e| anyhow::anyhow!("ClientConfig: {e}"))?;
     info!(endpoint = ?cfg.endpoint, "helloworld: connecting to broker");
 

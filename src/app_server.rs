@@ -3,8 +3,9 @@
 //! 路由布局（server 端 `/api/apps/helloworld/<rest>` 反代到本 sock 的 `/<rest>`）：
 //! - `GET    /items`                   → 列表
 //! - `POST   /items`                   → 新增
+//! - `PUT    /items/{id}`              → 更新（需认证）
 //! - `DELETE /items/{id}`              → 删除
-//! - `POST   /items/notify`            → 新增并触发通知
+//! - `POST   /items/notify`            → 新增并触发通知（需认证）
 //! - `POST   /greet`                   → 演示 typed JSON
 //! - `POST   /echo`                    → 透传 body
 //! - `GET    /assets/{*path}`          → 静态资源
@@ -16,7 +17,7 @@ use std::sync::Arc;
 
 use axum::{
     Router,
-    routing::{any, delete, get, post},
+    routing::{any, get, post, put},
 };
 use tokimo_bus_protocol::{BusListener, DataPlaneSocket};
 use tracing::{error, info};
@@ -42,7 +43,10 @@ pub async fn spawn(service: &str, ctx: Arc<AppCtx>) -> anyhow::Result<DataPlaneS
 fn build_router(ctx: Arc<AppCtx>) -> Router {
     Router::new()
         .route("/items", get(handlers::items_list).post(handlers::items_add))
-        .route("/items/{id}", delete(handlers::items_delete))
+        .route(
+            "/items/{id}",
+            put(handlers::items_update).delete(handlers::items_delete),
+        )
         .route("/items/notify", post(handlers::items_add_with_notify))
         .route("/greet", post(handlers::greet))
         .route("/echo", any(handlers::echo))

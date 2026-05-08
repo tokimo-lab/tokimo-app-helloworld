@@ -14,6 +14,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use tokimo_bus_auth::TokimoUser;
 use tokimo_bus_client::BusClient;
 use tokimo_bus_protocol::CallerCtx;
 use tracing::{info, warn};
@@ -40,6 +41,12 @@ impl AppError {
     pub fn internal(msg: impl Into<String>) -> Self {
         Self {
             status: StatusCode::INTERNAL_SERVER_ERROR,
+            message: msg.into(),
+        }
+    }
+    pub fn not_found(msg: impl Into<String>) -> Self {
+        Self {
+            status: StatusCode::NOT_FOUND,
             message: msg.into(),
         }
     }
@@ -154,8 +161,40 @@ pub async fn items_delete(State(ctx): State<Arc<AppCtx>>, Path(id): Path<Uuid>) 
     }))
 }
 
+#[derive(Deserialize)]
+pub struct UpdateReq {
+    content: String,
+}
+
+pub async fn items_update(
+    State(ctx): State<Arc<AppCtx>>,
+    Path(id): Path<Uuid>,
+    TokimoUser { .. }: TokimoUser,
+    Json(req): Json<UpdateReq>,
+) -> Result<Json<ItemDto>, AppError> {
+    if req.content.trim().is_empty() {
+        return Err(AppError::bad_request("content is empty"));
+    }
+
+    let row = sqlx::query_as::<_, (Uuid, String, DateTime<Utc>)>(
+        "UPDATE items SET content = $1 WHERE id = $2 RETURNING id, content, created_at",
+    )
+    .bind(&req.content)
+    .bind(id)
+    .fetch_optional(&ctx.pool)
+    .await?
+    .ok_or_else(|| AppError::not_found("item not found"))?;
+
+    Ok(Json(ItemDto {
+        id: row.0,
+        content: row.1,
+        created_at: row.2,
+    }))
+}
+
 pub async fn items_add_with_notify(
     State(ctx): State<Arc<AppCtx>>,
+    TokimoUser { user_id }: TokimoUser,
     headers: HeaderMap,
     Json(req): Json<AddReq>,
 ) -> Result<Json<ItemDto>, AppError> {
@@ -175,11 +214,7 @@ pub async fn items_add_with_notify(
         created_at: row.2,
     };
 
-    // 从 server 注入的 header 提取 user_id（方案 3 的标准做法）
-    let user_id = headers
-        .get("x-tokimo-user-id")
-        .and_then(|v| v.to_str().ok())
-        .map(|s| s.to_string());
+    let user_id = Some(user_id);
 
     let request_id = headers
         .get("x-request-id")

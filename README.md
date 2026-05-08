@@ -17,9 +17,9 @@ $DATA_LOCAL_PATH/apps/helloworld.sock
   │
 this binary
   ├─ axum router (src/app_server.rs)         全部路由挂在同一个 sock 上
-  │   ├─ GET/POST  /items                    CRUD
-  │   ├─ DELETE    /items/{id}
-  │   ├─ POST      /items/notify             跨 app 调 notification_center
+  │   ├─ GET/POST  /items                    列表 / 新增
+  │   ├─ PUT/DELETE /items/{id}              更新 / 删除（PUT 需认证）
+  │   ├─ POST      /items/notify             认证后新增并跨 app 调 notification_center.notify
   │   ├─ POST      /greet                    typed JSON 演示
   │   ├─ POST      /echo                     透传 body
   │   ├─ GET       /assets/{*path}           静态资源（rust-embed）
@@ -31,12 +31,93 @@ this binary
 ## What it shows
 
 - 标准 axum handler 签名（`State<Arc<AppCtx>>` / `Json<Req>` / `Result<_, AppError>`）
-- 从 `x-tokimo-user-id` header 取用户身份（server 反代时注入）
+- `TokimoUser` extractor 从 server 反代注入的 `x-tokimo-user-id` 读取用户身份
+- `PUT /items/{id}` 演示认证后的更新接口
 - `BusClient::builder().service(...).data_plane(socket)` —— 仅注册自己 + 上报 sock，不再
   逐个 `.method().on_invoke()`
-- 跨 app 调用：`items_add_with_notify` 通过 `BusClient.invoke("notification_center", "notify", ...)`
+- 跨 app 调用：`items_add_with_notify` 认证后通过 `BusClient.invoke("notification_center", "notify", ...)` 发通知
 - rust-embed 嵌入 `ui/dist`，dev 模式下 `TOKIMO_APP_ASSETS_DIR_*` 走文件系统
 - 优雅关闭：SIGINT 或 broker `Shutdown` 帧
+
+## CLI 用法
+
+前置条件：
+
+1. 启动 Tokimo 主 server（默认 `http://localhost:5678`）。
+2. 浏览器登录后，在「设置 → API Keys」创建一个 `mm_xxx` token。
+3. 通过 `--tokimo-token` 或 `TOKIMO_TOKEN` 环境变量传入 token。
+
+### `tokimo-app-helloworld --help`
+
+```text
+Helloworld 是 Tokimo 子 app 的样板，演示：
+- server 模式（被主 server supervisor 拉起，无参运行）
+- CLI 模式（带子命令运行，使用 --tokimo-token mm_xxx 鉴权）
+
+CLI 用法前置条件：
+1. 启动 Tokimo 主 server (默认 http://localhost:5678)
+2. 浏览器登录后，去「设置 → API Keys」创建一个 token (mm_xxx)
+3. 把 token 通过 --tokimo-token 或 TOKIMO_TOKEN env 传入
+
+Usage: tokimo-app-helloworld.exe [OPTIONS] [COMMAND]
+
+Commands:
+  serve  启动 server 模式（无参运行时默认行为）
+  items  管理 helloworld items
+  greet  调用 helloworld 的 POST /greet。
+  help   Print this message or the help of the given subcommand(s)
+
+Options:
+      --tokimo-token <TOKEN>
+          Tokimo API token (mm_xxx). 在主 server 的设置页 → API Keys 创建。
+
+          [env: TOKIMO_TOKEN]
+      --tokimo-server <SERVER>
+          Tokimo 主 server URL，默认 http://localhost:5678
+
+          [env: TOKIMO_SERVER_URL=]
+  -h, --help
+          Print help (see a summary with '-h')
+```
+
+### `tokimo-app-helloworld items --help`
+
+```text
+管理 helloworld items
+
+Usage: tokimo-app-helloworld.exe items [OPTIONS] <COMMAND>
+
+Commands:
+  list    列出最近 100 条 item。
+  add     新增一条 item。
+  update  更新指定 item 的 content。
+  delete  删除指定 item。
+  help    Print this message or the help of the given subcommand(s)
+
+Options:
+      --tokimo-token <TOKEN>
+          Tokimo API token (mm_xxx). 在主 server 的设置页 → API Keys 创建。
+
+          [env: TOKIMO_TOKEN]
+      --tokimo-server <SERVER>
+          Tokimo 主 server URL，默认 http://localhost:5678
+
+          [env: TOKIMO_SERVER_URL=]
+  -h, --help
+          Print help (see a summary with '-h')
+```
+
+### 示例
+
+```powershell
+.\tokimo-app-helloworld.exe serve
+.\tokimo-app-helloworld.exe --tokimo-token mm_xxx greet Alice
+.\tokimo-app-helloworld.exe --tokimo-token mm_xxx items list
+.\tokimo-app-helloworld.exe --tokimo-token mm_xxx items add "hello tokimo"
+.\tokimo-app-helloworld.exe --tokimo-token mm_xxx items update 018f0000-0000-7000-8000-000000000000 "updated content"
+.\tokimo-app-helloworld.exe --tokimo-token mm_xxx items delete 018f0000-0000-7000-8000-000000000000
+$env:TOKIMO_TOKEN = "mm_xxx"; .\tokimo-app-helloworld.exe items list
+```
 
 ## 本地开发循环
 
