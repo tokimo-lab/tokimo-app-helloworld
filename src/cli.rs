@@ -2,10 +2,8 @@
 
 use anyhow::Context;
 use chrono::Utc;
-use tokimo_bus_auth::{
-    cli::{Credentials, TokimoAuthArgs},
-    db::{connect_db, verify_token},
-};
+use tokimo_bus_auth::db::{connect_db, verify_token};
+use tokimo_bus_cli::{Credentials, TokimoAuthArgs};
 use uuid::Uuid;
 
 use crate::{

@@ -20,7 +20,7 @@ mod handlers;
 use std::sync::{Arc, OnceLock};
 
 use clap::{Parser, Subcommand};
-use tokimo_bus_auth::cli::TokimoAuthArgs;
+use tokimo_bus_cli::TokimoAuthArgs;
 use tokimo_bus_client::{BusClient, ClientConfig};
 use tracing::{error, info};
 
@@ -40,50 +40,30 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
-    /// 管理 helloworld items (子命令: list / add / update / delete)
+    /// 管理 helloworld items
     #[command(subcommand, long_about = "管理 helloworld items", term_width = 100)]
     Items(ItemsCmd),
-    /// 打印问候语 — 用法: greet <NAME>
-    ///
-    /// 示例:
-    ///   tokimo-app-helloworld --tokimo-token mm_xxx greet Alice
-    #[command(verbatim_doc_comment)]
+    /// 打印问候语
     Greet { name: String },
 }
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum ItemsCmd {
-    /// 列出最近 100 条 item — 用法: list
-    ///
-    /// 示例:
-    ///   tokimo-app-helloworld --tokimo-token mm_xxx items list
-    #[command(verbatim_doc_comment)]
+    /// 列出最近 100 条 item
     List,
-    /// 新增一条 item — 用法: add <CONTENT>
-    ///
-    /// 示例:
-    ///   tokimo-app-helloworld --tokimo-token mm_xxx items add "hello tokimo"
-    #[command(verbatim_doc_comment)]
+    /// 新增一条 item
     Add {
         /// item 内容（非空字符串）
         content: String,
     },
-    /// 更新 item 内容 — 用法: update <ID> <CONTENT>
-    ///
-    /// 示例:
-    ///   tokimo-app-helloworld --tokimo-token mm_xxx items update 018f... "updated content"
-    #[command(verbatim_doc_comment)]
+    /// 更新 item 内容
     Update {
         /// item ID (UUID)
         id: uuid::Uuid,
         /// 新内容
         content: String,
     },
-    /// 删除指定 item — 用法: delete <ID>
-    ///
-    /// 示例:
-    ///   tokimo-app-helloworld --tokimo-token mm_xxx items delete 018f...
-    #[command(verbatim_doc_comment)]
+    /// 删除指定 item
     Delete {
         /// item ID (UUID)
         id: uuid::Uuid,
@@ -111,8 +91,8 @@ async fn main() -> anyhow::Result<()> {
         None => {
             // 人手动无参运行：打印 CLI help 而不是进 server 模式
             use clap::CommandFactory;
-            Cli::command().print_help().ok();
-            println!();
+            let mut cmd = Cli::command();
+            tokimo_bus_cli::print_help_unified(&mut cmd);
             std::process::exit(0);
         }
         Some(cmd) => {
