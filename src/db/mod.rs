@@ -3,6 +3,8 @@ use sea_orm::{ConnectOptions, ConnectionTrait, Database, DatabaseBackend, Databa
 pub mod entities;
 pub mod repos;
 
+const SCHEMA: &str = "helloworld";
+
 pub async fn init_pool() -> anyhow::Result<DatabaseConnection> {
     let base_url = std::env::var("DATABASE_URL").map_err(|_| anyhow::anyhow!("DATABASE_URL is required"))?;
 
@@ -16,16 +18,10 @@ pub async fn init_pool() -> anyhow::Result<DatabaseConnection> {
 }
 
 pub async fn init_schema(db: &DatabaseConnection) -> anyhow::Result<()> {
-    let schema = std::env::var("DB_SCHEMA").unwrap_or_else(|_| "helloworld".to_string());
-
-    if !schema.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
-        anyhow::bail!("DB_SCHEMA contains invalid characters: {schema:?}");
-    }
-
     let ddl = [
-        format!(r#"CREATE SCHEMA IF NOT EXISTS "{schema}""#),
+        format!(r#"CREATE SCHEMA IF NOT EXISTS "{SCHEMA}""#),
         format!(
-            r#"CREATE TABLE IF NOT EXISTS "{schema}".items (
+            r#"CREATE TABLE IF NOT EXISTS "{SCHEMA}".items (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
                 content TEXT NOT NULL,
                 user_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
@@ -33,10 +29,10 @@ pub async fn init_schema(db: &DatabaseConnection) -> anyhow::Result<()> {
             )"#
         ),
         format!(
-            r#"ALTER TABLE "{schema}".items ADD COLUMN IF NOT EXISTS user_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'"#
+            r#"ALTER TABLE "{SCHEMA}".items ADD COLUMN IF NOT EXISTS user_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'"#
         ),
-        format!(r#"CREATE INDEX IF NOT EXISTS items_created_at_idx ON "{schema}".items (created_at DESC)"#),
-        format!(r#"CREATE INDEX IF NOT EXISTS items_user_id_idx ON "{schema}".items (user_id)"#),
+        format!(r#"CREATE INDEX IF NOT EXISTS items_created_at_idx ON "{SCHEMA}".items (created_at DESC)"#),
+        format!(r#"CREATE INDEX IF NOT EXISTS items_user_id_idx ON "{SCHEMA}".items (user_id)"#),
     ];
 
     for sql in ddl {

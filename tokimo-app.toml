@@ -7,7 +7,6 @@ description = "Tokimo 多进程架构试点 app"
 
 [runtime]
 lifecycle    = "resident"            # resident | on_demand | one_shot
-db_schema    = "helloworld"          # 主 server spawn 时注入 DB_SCHEMA env
 binary       = "tokimo-app-helloworld"  # 不含 .exe 后缀；server 自动按平台拼接
 ui_dist      = "ui/dist"             # 相对 install 目录；用作 TOKIMO_APP_ASSETS_DIR
 
