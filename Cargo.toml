@@ -8,10 +8,10 @@ description = "Reference Tokimo app: multi-process pilot with DB + components + 
 repository  = "https://github.com/tokimo-lab/tokimo-app-helloworld"
 
 [dependencies]
-tokimo-bus-client   = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "5a605f4c7d6953349f719f3c9963fd34d72b834d" }
-tokimo-bus-protocol = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "5a605f4c7d6953349f719f3c9963fd34d72b834d", features = ["axum"] }
-tokimo-bus-auth     = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "5a605f4c7d6953349f719f3c9963fd34d72b834d", features = ["axum", "cli-db"] }
-tokimo-bus-cli      = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "5a605f4c7d6953349f719f3c9963fd34d72b834d" }
+tokimo-bus-client   = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "ee99f05e59c0a3131a5bccac1ba21ba02a0f1167" }
+tokimo-bus-protocol = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "ee99f05e59c0a3131a5bccac1ba21ba02a0f1167", features = ["axum"] }
+tokimo-bus-auth     = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "ee99f05e59c0a3131a5bccac1ba21ba02a0f1167", features = ["axum", "cli-db"] }
+tokimo-bus-cli      = { git = "https://github.com/tokimo-lab/tokimo-bus.git", rev = "ee99f05e59c0a3131a5bccac1ba21ba02a0f1167" }
 
 clap              = { version = "4", features = ["derive", "env"] }
 tokio              = { version = "1", features = ["rt-multi-thread", "macros", "time", "signal"] }

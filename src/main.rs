@@ -11,6 +11,9 @@
 //! - 业务路由改成标准 axum handler signature
 //! - 数据流 / 静态资源 / 业务方法 共用同一个 sock（同一个 axum router）
 
+/// Compile-time embedded app manifest; shared with the library crate via lib.rs.
+const MANIFEST: &str = include_str!("../tokimo-app.toml");
+
 mod app_server;
 mod assets;
 mod cli;
