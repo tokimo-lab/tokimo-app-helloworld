@@ -267,18 +267,6 @@ pub async fn items_add_with_notify(
 
 const JOB_TYPE_BULK_IMPORT: &str = "helloworld_bulk_import";
 const JOB_TYPE_LONG_RUNNING: &str = "helloworld_long_running";
-const LONG_RUNNING_LABELS: [&str; 10] = [
-    "Init",
-    "Fetch",
-    "Parse",
-    "Transform",
-    "Validate",
-    "Index",
-    "Store",
-    "Cleanup",
-    "Verify",
-    "Done",
-];
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -395,16 +383,22 @@ async fn run_simulated_job(
 }
 
 async fn run_bulk_import(client: &BusClient, user_id: &str, job_id: Uuid, params: &JsonValue) -> Result<(), AppError> {
-    let total = params.get("count").and_then(JsonValue::as_i64).unwrap_or(50).max(1);
+    let total = params
+        .get("total")
+        .or_else(|| params.get("count"))
+        .and_then(JsonValue::as_u64)
+        .unwrap_or(50)
+        .max(1);
 
-    for i in 1..=total {
-        sleep(Duration::from_millis(80)).await;
+    for i in 0..total {
+        sleep(Duration::from_millis(125)).await;
+        let current = i + 1;
         jobs::update_progress(
             client,
             caller_for(user_id),
             job_id,
-            ((i * 100) / total) as i32,
-            Some(json!({ "progress": { "current": i, "total": total, "label": format!("Importing item #{}", i) } })),
+            ((current * 100) / total) as i32,
+            Some(json!({ "progress": { "current": current, "total": total, "label": format!("Importing item #{}", current) } })),
         )
         .await?;
     }
@@ -413,26 +407,24 @@ async fn run_bulk_import(client: &BusClient, user_id: &str, job_id: Uuid, params
 }
 
 async fn run_long_running(client: &BusClient, user_id: &str, job_id: Uuid, params: &JsonValue) -> Result<(), AppError> {
-    let total = params.get("steps").and_then(JsonValue::as_u64).unwrap_or(10).max(1);
-    let step_ms = params
-        .get("stepMs")
-        .or_else(|| params.get("step_ms"))
-        .or_else(|| params.get("delayMs"))
+    let duration_secs = params
+        .get("duration_secs")
+        .or_else(|| params.get("durationSecs"))
         .and_then(JsonValue::as_u64)
-        .unwrap_or(500);
+        .unwrap_or(30)
+        .max(1);
+    let total = duration_secs * 2;
 
-    for i in 1..=total {
-        sleep(Duration::from_millis(step_ms)).await;
-        let step_name = LONG_RUNNING_LABELS
-            .get((i as usize).saturating_sub(1))
-            .copied()
-            .unwrap_or("Done");
+    for i in 0..total {
+        sleep(Duration::from_millis(500)).await;
+        let current = i + 1;
+        let elapsed_secs = current / 2;
         jobs::update_progress(
             client,
             caller_for(user_id),
             job_id,
-            ((i * 100) / total) as i32,
-            Some(json!({ "progress": { "current": i, "total": total, "label": format!("Step {}/{} - {}", i, total, step_name) } })),
+            ((current * 100) / total) as i32,
+            Some(json!({ "progress": { "current": current, "total": total, "label": format!("Working... {}s elapsed", elapsed_secs) } })),
         )
         .await?;
     }

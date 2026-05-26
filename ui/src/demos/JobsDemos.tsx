@@ -1,6 +1,6 @@
 import { type ShellJobEvent, useJobEvents } from "@tokimo/sdk";
 import { Button, Card, CircularProgress } from "@tokimo/ui";
-import { useCallback, useState } from "react";
+import { type ChangeEvent, useCallback, useState } from "react";
 import { ButtonRow, fmt, SERVICE, Section, Snapshot } from "./shared";
 
 const BULK_JOB_TYPE = "helloworld_bulk_import";
@@ -64,7 +64,11 @@ function getJobRecord(event: ShellJobEvent): Record<string, unknown> | null {
 }
 
 function getJobType(job: Record<string, unknown>): DemoJobType | null {
-  const value = stringField(job, "type") ?? stringField(job, "kind");
+  const value =
+    stringField(job, "type") ??
+    stringField(job, "jobType") ??
+    stringField(job, "job_type") ??
+    stringField(job, "kind");
   return value === BULK_JOB_TYPE || value === LONG_JOB_TYPE ? value : null;
 }
 
@@ -78,8 +82,9 @@ function clampProgress(value: number) {
 }
 
 function parseJobEvent(event: ShellJobEvent): ParsedJobEvent | null {
-  if (event.type !== "job_update" && event.type !== "external_job_update")
+  if (event.type !== "job_update" && event.type !== "external_job_update") {
     return null;
+  }
   const job = getJobRecord(event);
   if (!job) return null;
 
@@ -138,6 +143,40 @@ function updateFromParsed(parsed: ParsedJobEvent) {
   });
 }
 
+function JobNumberInput({
+  label,
+  min,
+  max,
+  value,
+  onChange,
+}: {
+  label: string;
+  min: number;
+  max: number;
+  value: number;
+  onChange: (value: number) => void;
+}) {
+  const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const next = Number(event.target.value);
+    if (!Number.isFinite(next)) return;
+    onChange(Math.max(min, Math.min(max, Math.round(next))));
+  };
+
+  return (
+    <label className="flex items-center gap-2 text-sm">
+      <span className="opacity-70">{label}</span>
+      <input
+        className="w-24 rounded border border-black/10 bg-white/70 px-2 py-1 text-sm dark:border-white/10 dark:bg-black/30"
+        type="number"
+        min={min}
+        max={max}
+        value={value}
+        onChange={handleChange}
+      />
+    </label>
+  );
+}
+
 function JobStatusCard({
   title,
   state,
@@ -145,44 +184,55 @@ function JobStatusCard({
   title: string;
   state: DemoJobState;
 }) {
-  const statusText =
-    state.status === "completed"
-      ? "✓ completed"
-      : state.status === "failed"
-        ? "✗ failed"
-        : state.status;
+  const isCompleted = state.status === "completed";
+  const statusText = isCompleted
+    ? "✅ Done"
+    : state.status === "failed"
+      ? "✗ failed"
+      : state.status;
+  const progressLabel =
+    state.current !== null && state.total !== null
+      ? `${state.current}/${state.total}`
+      : `${state.progress}%`;
 
   return (
     <Card className="flex flex-col gap-3 p-3">
       <div className="flex items-center gap-3">
-        <CircularProgress value={state.progress} size={58} />
+        <CircularProgress value={state.progress} size={64} strokeWidth={6}>
+          <span className="text-xs font-medium">{state.progress}%</span>
+        </CircularProgress>
         <div className="min-w-0 flex-1">
           <div className="text-sm font-medium">{title}</div>
           <div className="truncate text-xs opacity-60">
             {state.jobId ?? "No job yet"}
           </div>
-          <div className="text-xs opacity-70">
-            {statusText}
-            {state.label ? ` · ${state.label}` : ""}
-            {state.current !== null && state.total !== null
-              ? ` · ${state.current}/${state.total}`
-              : ""}
+          <div
+            className={
+              isCompleted
+                ? "text-xs font-medium text-green-600 dark:text-green-400"
+                : "text-xs opacity-70"
+            }
+          >
+            {statusText} · {progressLabel}
+          </div>
+          <div className="truncate text-xs opacity-80">
+            {state.label ?? "Idle — no event received yet"}
           </div>
         </div>
       </div>
       {state.error && <div className="text-sm text-red-500">{state.error}</div>}
-      <Snapshot>
-        {fmt({
-          jobId: state.jobId,
-          status: state.status,
-          progress: state.progress,
-          current: state.current,
-          total: state.total,
-          label: state.label,
-          error: state.error,
-          lastEvent: state.lastEvent,
-        })}
-      </Snapshot>
+      <details className="text-xs">
+        <summary className="cursor-pointer select-none opacity-70">
+          jobId / status / raw last event JSON
+        </summary>
+        <Snapshot>
+          {fmt({
+            jobId: state.jobId,
+            status: state.status,
+            rawLastEvent: state.lastEvent,
+          })}
+        </Snapshot>
+      </details>
     </Card>
   );
 }
@@ -197,7 +247,7 @@ function useHelloworldJobs(kind: DemoJobKind) {
       const parsed = parseJobEvent(event);
       if (!parsed || parsed.jobType !== jobType) return;
       setState((prev) => {
-        if (prev.jobId && parsed.jobId !== prev.jobId) return prev;
+        if (prev.jobId !== parsed.jobId) return prev;
         return updateFromParsed(parsed)(prev);
       });
     },
@@ -206,36 +256,46 @@ function useHelloworldJobs(kind: DemoJobKind) {
 
   useJobEvents({ jobTypes: [jobType], onEvent: applyEvent });
 
-  const start = useCallback(async () => {
-    setStartError(null);
-    const params: Record<string, number> =
-      jobType === BULK_JOB_TYPE ? { count: 50 } : { steps: 10, stepMs: 500 };
-    try {
-      const jobId = await startJob(jobType, params);
-      setState({
-        ...INITIAL_JOB_STATE,
-        jobId,
-        status: "queued",
-        lastEvent: { jobId, jobType, params },
-      });
-    } catch (e) {
-      setStartError(e instanceof Error ? e.message : String(e));
-    }
-  }, [jobType]);
+  const start = useCallback(
+    async (params: Record<string, number>) => {
+      setStartError(null);
+      try {
+        const jobId = await startJob(jobType, params);
+        setState({
+          ...INITIAL_JOB_STATE,
+          jobId,
+          status: "queued",
+          lastEvent: { jobId, jobType, params },
+        });
+      } catch (e) {
+        setStartError(e instanceof Error ? e.message : String(e));
+      }
+    },
+    [jobType],
+  );
 
   return { state, start, startError };
 }
 
 export function BulkImportJobDemo() {
+  const [total, setTotal] = useState(50);
   const { state, start, startError } = useHelloworldJobs("bulk");
+
   return (
     <Section
-      desc="Starts a simulated bulk import job and updates progress from WebSocket job events."
+      desc="Starts a simulated bulk import job and updates progress from WebSocket job events only."
       code="useJobEvents({ jobTypes: ['helloworld_bulk_import'], onEvent })"
     >
       <ButtonRow>
-        <Button variant="primary" onClick={start}>
-          Start bulk import (50 items)
+        <JobNumberInput
+          label="Items"
+          min={1}
+          max={500}
+          value={total}
+          onChange={setTotal}
+        />
+        <Button variant="primary" onClick={() => start({ total })}>
+          {state.jobId ? "Run again" : "Start bulk import"}
         </Button>
       </ButtonRow>
       {startError && <div className="text-sm text-red-500">{startError}</div>}
@@ -245,15 +305,27 @@ export function BulkImportJobDemo() {
 }
 
 export function LongRunningJobDemo() {
+  const [durationSecs, setDurationSecs] = useState(30);
   const { state, start, startError } = useHelloworldJobs("long");
+
   return (
     <Section
       desc="Starts a simulated long-running job and renders progress from WebSocket job_update payloads only."
       code="useJobEvents({ jobTypes: ['helloworld_long_running'], onEvent })"
     >
       <ButtonRow>
-        <Button variant="primary" onClick={start}>
-          Start long-running job (10 steps)
+        <JobNumberInput
+          label="Duration (s)"
+          min={1}
+          max={300}
+          value={durationSecs}
+          onChange={setDurationSecs}
+        />
+        <Button
+          variant="primary"
+          onClick={() => start({ duration_secs: durationSecs })}
+        >
+          {state.jobId ? "Run again" : "Start long running"}
         </Button>
       </ButtonRow>
       {startError && <div className="text-sm text-red-500">{startError}</div>}

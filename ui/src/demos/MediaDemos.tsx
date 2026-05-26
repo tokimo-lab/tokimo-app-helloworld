@@ -1,47 +1,37 @@
 import type { AppRuntimeCtx } from "@tokimo/sdk";
 import { useMediaCenter } from "@tokimo/sdk/react";
-import { Button, Empty } from "@tokimo/ui";
+import { Button, Card, Empty } from "@tokimo/ui";
 import { useEffect } from "react";
 import { ButtonRow, fmt, Section, Snapshot } from "./shared";
 
 export function MediaCenterSnapshotDemo({ ctx }: { ctx: AppRuntimeCtx }) {
   const { snapshot } = useMediaCenter(ctx);
+
   useEffect(() => {
     console.log("[helloworld] media.snapshot →", snapshot);
   }, [snapshot]);
+
   return (
     <Section
       desc="Central media center snapshot. Reactive — re-renders whenever the active provider's playback state changes. `null` = no provider playing."
-      code="const { snapshot } = useMediaCenter(ctx); snapshot?.isPlaying;"
+      code="const { snapshot } = useMediaCenter(ctx);"
     >
-      <Snapshot>
-        {fmt(
-          snapshot
-            ? {
-                providerId: snapshot.providerId,
-                isPlaying: snapshot.isPlaying,
-                currentTimeMs: snapshot.currentTimeMs,
-                durationMs: snapshot.durationMs,
-                volume: snapshot.volume,
-                shuffle: snapshot.shuffle,
-                repeatMode: snapshot.repeatMode,
-                currentIndex: snapshot.currentIndex,
-                queueLen: snapshot.queue.length,
-              }
-            : null,
-        )}
-      </Snapshot>
+      {snapshot == null && (
+        <Empty description="Media center idle — start playback in another app first." />
+      )}
+      <Snapshot>{fmt(snapshot ?? null)}</Snapshot>
     </Section>
   );
 }
 
 export function MediaSessionDemo({ ctx }: { ctx: AppRuntimeCtx }) {
   const { snapshot, api } = useMediaCenter(ctx);
+  const mediaApi = api ?? ctx.shell.media;
 
-  if (snapshot == null || api == null) {
+  if (snapshot == null) {
     return (
       <Section
-        desc="Playback controls for the active media session."
+        desc="Compact controls for the active media session."
         code="const { snapshot, api } = useMediaCenter(ctx);"
       >
         <Empty description="No active media source — start playback in another app first." />
@@ -49,62 +39,52 @@ export function MediaSessionDemo({ ctx }: { ctx: AppRuntimeCtx }) {
     );
   }
 
-  const currentTrack =
-    snapshot.queue[snapshot.currentIndex] != null
-      ? snapshot.queue[snapshot.currentIndex]
-      : null;
-
-  const handleSeek = (deltaMs: number) => {
-    const target = snapshot.currentTimeMs + deltaMs;
-    const clamped =
-      snapshot.durationMs > 0
-        ? Math.max(0, Math.min(target, snapshot.durationMs))
-        : Math.max(0, target);
-    api.seek(clamped);
-  };
-
-  const handleVolume = (delta: number) => {
-    api.setVolume(Math.max(0, Math.min(1, snapshot.volume + delta)));
-  };
+  const currentTrack = snapshot.queue[snapshot.currentIndex] ?? null;
 
   return (
     <Section
-      desc="Interactive controls for the active media session. pause/resume, next/prev, seek ±5 s, volume ±0.1."
+      desc="Compact active source plus pause/resume and next/previous controls."
       code="const { snapshot, api } = useMediaCenter(ctx);"
     >
-      <Snapshot>
-        {fmt({
-          providerId: snapshot.providerId,
-          title: currentTrack?.title ?? null,
-          artist: currentTrack?.artist ?? null,
-        })}
-      </Snapshot>
+      <Card className="flex items-center gap-3 p-3">
+        {currentTrack?.artworkUrl ? (
+          <img
+            alt=""
+            className="h-14 w-14 rounded-md object-cover"
+            src={currentTrack.artworkUrl}
+          />
+        ) : (
+          <div className="flex h-14 w-14 items-center justify-center rounded-md bg-black/10 text-xs opacity-60 dark:bg-white/10">
+            Art
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="text-xs opacity-60">
+            {snapshot.providerId} ·{" "}
+            {snapshot.isPlaying ? "isPlaying" : "paused"}
+          </div>
+          <div className="truncate text-sm font-medium">
+            {currentTrack?.title ?? "Untitled track"}
+          </div>
+          <div className="truncate text-xs opacity-70">
+            {currentTrack?.artist ?? "Unknown artist"}
+          </div>
+        </div>
+      </Card>
       <ButtonRow>
-        <Button size="small" onClick={() => api.previous()}>
+        <Button size="small" onClick={() => mediaApi.previous()}>
           ⏮ prev
         </Button>
         <Button
           size="small"
           onClick={() => {
-            snapshot.isPlaying ? api.pause() : api.resume();
+            snapshot.isPlaying ? mediaApi.pause() : mediaApi.resume();
           }}
         >
           {snapshot.isPlaying ? "⏸ pause" : "▶ play"}
         </Button>
-        <Button size="small" onClick={() => api.next()}>
+        <Button size="small" onClick={() => mediaApi.next()}>
           ⏭ next
-        </Button>
-        <Button size="small" onClick={() => handleSeek(-5000)}>
-          ⏪ -5s
-        </Button>
-        <Button size="small" onClick={() => handleSeek(5000)}>
-          +5s ⏩
-        </Button>
-        <Button size="small" onClick={() => handleVolume(-0.1)}>
-          🔉 vol-
-        </Button>
-        <Button size="small" onClick={() => handleVolume(0.1)}>
-          🔊 vol+
         </Button>
       </ButtonRow>
     </Section>
