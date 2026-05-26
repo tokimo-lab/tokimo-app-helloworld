@@ -314,7 +314,6 @@ pub async fn start_job(
         caller_for(&user_id),
         jobs::CreateJobRequest {
             job_type: req.job_type.clone(),
-            kind: req.job_type.clone(),
             params: params.clone(),
             data: None,
             parent_job_id: None,

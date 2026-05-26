@@ -32,9 +32,8 @@ pub struct JobView {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateJobRequest {
-    #[serde(rename = "type")]
+    #[serde(rename = "kind")]
     pub job_type: String,
-    pub kind: String,
     pub params: JsonValue,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<JsonValue>,
