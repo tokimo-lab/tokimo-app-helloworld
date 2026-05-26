@@ -12,6 +12,7 @@ import {
   type Dispose,
   defineApp,
   makeTranslator,
+  RuntimeProvider,
 } from "@tokimo/sdk";
 import {
   ConfigProvider,
@@ -245,7 +246,9 @@ export default defineApp({
       <StrictMode>
         <ConfigProvider locale={locale}>
           <ToastProvider>
-            <HelloworldWindow ctx={ctx} />
+            <RuntimeProvider value={ctx}>
+              <HelloworldWindow ctx={ctx} />
+            </RuntimeProvider>
           </ToastProvider>
         </ConfigProvider>
       </StrictMode>,
