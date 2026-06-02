@@ -3,15 +3,13 @@ use crate::{
     db::entities::items::{self, ActiveModel, Column, Entity},
 };
 use chrono::Utc;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, QuerySelect, Set,
-};
+use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, EntityTrait, QueryFilter, QueryOrder, QuerySelect, Set};
 use uuid::Uuid;
 
 pub struct ItemsRepo;
 
 impl ItemsRepo {
-    pub async fn list_by_user(db: &DatabaseConnection, user_id: Uuid) -> Result<Vec<items::Model>, AppError> {
+    pub async fn list_by_user<C: ConnectionTrait>(db: &C, user_id: Uuid) -> Result<Vec<items::Model>, AppError> {
         Ok(Entity::find()
             .filter(Column::UserId.eq(user_id))
             .order_by_desc(Column::CreatedAt)
@@ -20,8 +18,8 @@ impl ItemsRepo {
             .await?)
     }
 
-    pub async fn find_by_id(
-        db: &DatabaseConnection,
+    pub async fn find_by_id<C: ConnectionTrait>(
+        db: &C,
         id: Uuid,
         user_id: Uuid,
     ) -> Result<Option<items::Model>, AppError> {
@@ -32,7 +30,7 @@ impl ItemsRepo {
             .await?)
     }
 
-    pub async fn create(db: &DatabaseConnection, user_id: Uuid, content: String) -> Result<items::Model, AppError> {
+    pub async fn create<C: ConnectionTrait>(db: &C, user_id: Uuid, content: String) -> Result<items::Model, AppError> {
         let am = ActiveModel {
             id: Set(Uuid::new_v4()),
             content: Set(content),
@@ -42,8 +40,8 @@ impl ItemsRepo {
         Ok(am.insert(db).await?)
     }
 
-    pub async fn update(
-        db: &DatabaseConnection,
+    pub async fn update<C: ConnectionTrait>(
+        db: &C,
         id: Uuid,
         user_id: Uuid,
         content: String,
@@ -56,7 +54,7 @@ impl ItemsRepo {
         Ok(Some(am.update(db).await?))
     }
 
-    pub async fn delete(db: &DatabaseConnection, id: Uuid, user_id: Uuid) -> Result<u64, AppError> {
+    pub async fn delete<C: ConnectionTrait>(db: &C, id: Uuid, user_id: Uuid) -> Result<u64, AppError> {
         let result = Entity::delete_many()
             .filter(Column::Id.eq(id))
             .filter(Column::UserId.eq(user_id))
