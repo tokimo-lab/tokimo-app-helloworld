@@ -81,8 +81,8 @@ impl std::error::Error for AppError {}
 #[derive(Parser, Debug)]
 #[command(
     name = "tokimo-app-helloworld",
-    about = "Helloworld — Tokimo 子 app CLI",
-    long_about = "Helloworld CLI — 直接读写 Tokimo 数据库，管理 helloworld items。\n\nCLI 直接读写数据库，不依赖主 server 进程运行。",
+    about = "Helloworld — Tokimo app CLI",
+    long_about = "Helloworld CLI — directly read/write Tokimo database to manage helloworld items.\n\nCLI reads/writes the database directly; no main server process needed.",
     term_width = 100
 )]
 struct Cli {
@@ -94,38 +94,38 @@ struct Cli {
 
 #[derive(Subcommand, Debug)]
 enum Command {
-    /// 管理 helloworld items
+    /// Manage helloworld items
     #[command(
         subcommand_required = false,
         arg_required_else_help = false,
-        long_about = "管理 helloworld items",
+        long_about = "Manage helloworld items",
         term_width = 100
     )]
     Items {
         #[command(subcommand)]
         cmd: Option<ItemsCmd>,
     },
-    /// 打印问候语
+    /// Print greeting
     Greet { name: String },
 }
 
 #[derive(Subcommand, Debug)]
 pub(crate) enum ItemsCmd {
-    /// 列出最近 100 条 item
+    /// List latest 100 items
     List,
-    /// 新增一条 item
+    /// Add a new item
     Add {
-        /// item 内容（非空字符串）
+        /// Item content (non-empty string)
         content: String,
     },
-    /// 更新 item 内容
+    /// Update item content
     Update {
-        /// item ID (UUID)
+        /// Item ID (UUID)
         id: uuid::Uuid,
-        /// 新内容
+        /// New content
         content: String,
     },
-    /// 删除指定 item
+    /// Delete specified item
     Delete {
         /// item ID (UUID)
         id: uuid::Uuid,
