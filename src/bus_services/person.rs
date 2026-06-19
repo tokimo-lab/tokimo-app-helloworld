@@ -65,10 +65,7 @@ pub fn register(builder: BusClientBuilder, ctx: Arc<AppState>) -> BusClientBuild
                 serde_json::to_vec(&cached).map_err(|e| BusError::Internal(e.to_string()))
             }
         })
-        .method(decl(
-            "match_face",
-            "Match a face against known persons for a user",
-        ))
+        .method(decl("match_face", "Match a face against known persons for a user"))
         .on_invoke("match_face", move |req| {
             let ctx = ctx_match.clone();
             async move {
@@ -106,10 +103,7 @@ pub fn register(builder: BusClientBuilder, ctx: Arc<AppState>) -> BusClientBuild
                 serde_json::to_vec(&resp).map_err(|e| BusError::Internal(e.to_string()))
             }
         })
-        .method(decl(
-            "delete_source",
-            "Delete cached faces and media by source (GC)",
-        ))
+        .method(decl("delete_source", "Delete cached faces and media by source (GC)"))
         .on_invoke("delete_source", move |req| {
             let ctx = ctx_delete.clone();
             async move {
@@ -120,21 +114,13 @@ pub fn register(builder: BusClientBuilder, ctx: Arc<AppState>) -> BusClientBuild
                 }
                 let body: Req = decode_json(&req.payload)?;
 
-                let deleted_faces = FaceCacheRepo::delete_by_source(
-                    &ctx.db,
-                    &body.source_app,
-                    &body.source_id,
-                )
-                .await
-                .map_err(|e| BusError::Internal(e.to_string()))?;
+                let deleted_faces = FaceCacheRepo::delete_by_source(&ctx.db, &body.source_app, &body.source_id)
+                    .await
+                    .map_err(|e| BusError::Internal(e.to_string()))?;
 
-                let deleted_media = PersonRepo::delete_media_by_source(
-                    &ctx.db,
-                    &body.source_app,
-                    &body.source_id,
-                )
-                .await
-                .map_err(|e| BusError::Internal(e.to_string()))?;
+                let deleted_media = PersonRepo::delete_media_by_source(&ctx.db, &body.source_app, &body.source_id)
+                    .await
+                    .map_err(|e| BusError::Internal(e.to_string()))?;
 
                 serde_json::to_vec(&serde_json::json!({
                     "deleted_faces": deleted_faces,

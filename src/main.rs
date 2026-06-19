@@ -133,10 +133,7 @@ async fn run_server() -> anyhow::Result<()> {
 
     let builder = bus_services::person::register(builder, Arc::clone(&ctx));
 
-    let client = builder
-        .build()
-        .await
-        .map_err(|e| anyhow::anyhow!("bus build: {e}"))?;
+    let client = builder.build().await.map_err(|e| anyhow::anyhow!("bus build: {e}"))?;
 
     client_slot
         .set(Arc::clone(&client))

@@ -21,10 +21,7 @@ impl FaceCacheRepo {
             .await?)
     }
 
-    pub async fn get_by_id<C: ConnectionTrait>(
-        db: &C,
-        id: Uuid,
-    ) -> Result<Option<image_face_cache::Model>, AppError> {
+    pub async fn get_by_id<C: ConnectionTrait>(db: &C, id: Uuid) -> Result<Option<image_face_cache::Model>, AppError> {
         Ok(Entity::find_by_id(id).one(db).await?)
     }
 

@@ -15,10 +15,7 @@ pub struct PersonRepo;
 
 #[allow(dead_code)]
 impl PersonRepo {
-    pub async fn list<C: ConnectionTrait>(
-        db: &C,
-        user_id: Uuid,
-    ) -> Result<Vec<persons::Model>, AppError> {
+    pub async fn list<C: ConnectionTrait>(db: &C, user_id: Uuid) -> Result<Vec<persons::Model>, AppError> {
         Ok(Entity::find()
             .filter(Column::UserId.eq(user_id))
             .order_by_desc(Column::UpdatedAt)
@@ -78,40 +75,25 @@ impl PersonRepo {
         Ok(Some(am.update(db).await?))
     }
 
-    pub async fn increment_face_count<C: ConnectionTrait>(
-        db: &C,
-        person_id: Uuid,
-    ) -> Result<(), AppError> {
+    pub async fn increment_face_count<C: ConnectionTrait>(db: &C, person_id: Uuid) -> Result<(), AppError> {
         Entity::update_many()
-            .col_expr(
-                Column::FaceCount,
-                Expr::col(Column::FaceCount).add(1),
-            )
+            .col_expr(Column::FaceCount, Expr::col(Column::FaceCount).add(1))
             .filter(Column::Id.eq(person_id))
             .exec(db)
             .await?;
         Ok(())
     }
 
-    pub async fn decrement_face_count<C: ConnectionTrait>(
-        db: &C,
-        person_id: Uuid,
-    ) -> Result<(), AppError> {
+    pub async fn decrement_face_count<C: ConnectionTrait>(db: &C, person_id: Uuid) -> Result<(), AppError> {
         Entity::update_many()
-            .col_expr(
-                Column::FaceCount,
-                Expr::cust("GREATEST(face_count - 1, 0)"),
-            )
+            .col_expr(Column::FaceCount, Expr::cust("GREATEST(face_count - 1, 0)"))
             .filter(Column::Id.eq(person_id))
             .exec(db)
             .await?;
         Ok(())
     }
 
-    pub async fn delete_empty_persons<C: ConnectionTrait>(
-        db: &C,
-        user_id: Uuid,
-    ) -> Result<u64, AppError> {
+    pub async fn delete_empty_persons<C: ConnectionTrait>(db: &C, user_id: Uuid) -> Result<u64, AppError> {
         let result = Entity::delete_many()
             .filter(Column::UserId.eq(user_id))
             .filter(Column::FaceCount.eq(0))
@@ -180,10 +162,7 @@ impl PersonRepo {
         Ok(am.insert(db).await?)
     }
 
-    pub async fn get_person_media<C: ConnectionTrait>(
-        db: &C,
-        person_id: Uuid,
-    ) -> Result<Vec<pm::Model>, AppError> {
+    pub async fn get_person_media<C: ConnectionTrait>(db: &C, person_id: Uuid) -> Result<Vec<pm::Model>, AppError> {
         Ok(pm::Entity::find()
             .filter(pm::Column::PersonId.eq(person_id))
             .order_by_desc(pm::Column::CreatedAt)
@@ -230,10 +209,7 @@ impl PersonRepo {
             .await? as i32;
 
         Entity::update_many()
-            .col_expr(
-                Column::FaceCount,
-                Expr::col(Column::FaceCount).add(source_faces),
-            )
+            .col_expr(Column::FaceCount, Expr::col(Column::FaceCount).add(source_faces))
             .filter(Column::Id.eq(target_id))
             .exec(&txn)
             .await?;

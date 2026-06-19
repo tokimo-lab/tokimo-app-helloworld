@@ -10,10 +10,7 @@ use tokimo_bus_auth::TokimoUser;
 use ts_rs::TS;
 use uuid::Uuid;
 
-use crate::{
-    db::repos::person_repo::PersonRepo,
-    error::AppError,
-};
+use crate::{db::repos::person_repo::PersonRepo, error::AppError};
 
 pub type AppCtx = crate::state::AppState;
 

@@ -7,9 +7,7 @@ pub async fn run_list(user_id: String) -> anyhow::Result<()> {
     let db = init_pool().await.context("connect database failed")?;
     let uid = Uuid::parse_str(&user_id).context("invalid user_id")?;
 
-    let persons = PersonRepo::list(&db, uid)
-        .await
-        .context("list persons failed")?;
+    let persons = PersonRepo::list(&db, uid).await.context("list persons failed")?;
 
     if persons.is_empty() {
         println!("No persons.");
@@ -28,11 +26,7 @@ pub async fn run_list(user_id: String) -> anyhow::Result<()> {
     Ok(())
 }
 
-pub async fn run_match_face(
-    user_id: String,
-    image_hash: String,
-    face_index: i32,
-) -> anyhow::Result<()> {
+pub async fn run_match_face(user_id: String, image_hash: String, face_index: i32) -> anyhow::Result<()> {
     let db = init_pool().await.context("connect database failed")?;
     let uid = Uuid::parse_str(&user_id).context("invalid user_id")?;
 
