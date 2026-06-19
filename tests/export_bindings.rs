@@ -3,4 +3,4 @@
 #![allow(unused_imports)]
 
 // Trigger ts-rs export by referencing all DTO types.
-use tokimo_app_helloworld::handlers::{AddReq, DeleteResp, GreetReq, GreetResp, ItemDto, ItemsListResp, UpdateReq};
+use tokimo_app_person::handlers::{PersonDto, PersonListResponse, UpdatePersonReq};
