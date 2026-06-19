@@ -29,6 +29,6 @@ pre-commit:
 pre-push:
   commands:
     fmt-check:
-      run: cargo fmt -p tokimo-app-helloworld -- --check
+      run: cargo fmt -p tokimo-app-person -- --check
     clippy:
-      run: cargo clippy -p tokimo-app-helloworld --lib --bins --tests -- -D warnings
+      run: cargo clippy -p tokimo-app-person --lib --bins --tests -- -D warnings
