@@ -20,13 +20,13 @@ importers:
         specifier: link:../../../packages/tokimo-viewers
         version: link:../../../packages/tokimo-viewers
       lucide-react:
-        specifier: ^1.11.0
+        specifier: ^1.7.0
         version: 1.17.0(react@19.2.7)
       react:
-        specifier: ^19.2.5
+        specifier: ^19.2.7
         version: 19.2.7
       react-dom:
-        specifier: ^19.2.5
+        specifier: ^19.2.7
         version: 19.2.7(react@19.2.7)
     devDependencies:
       '@tokimo/app-builder':
