@@ -1,25 +1,20 @@
 # Tokimo app manifest（供主 server 读取，注册 / spawn / 资源代理 / launchpad 展示）
 [app]
-id          = "person"
-display     = "Person"
+id          = "helloworld"
+display     = "HelloWorld"
 version     = "0.1.0"
-description = "中心化人物身份服务 — 跨 app 人脸匹配与人物管理"
+description = "示例 app"
 
 [runtime]
-lifecycle    = "resident"
-binary       = "tokimo-app-person"
+lifecycle    = "on-demand"
+binary       = "tokimo-app-helloworld"
 ui_dist      = "ui/dist"
 
 [ui]
 entry        = "assets/index.js"
-window_type  = "person"
+window_type  = "helloworld"
 category     = "app"
-icon         = "Users"
-color        = "#8b5cf6"
-width        = 900
-height       = 700
-
-[database]
-schema         = "person"
-migrations_dir = "migrations"
-driver         = "postgres"
+icon         = "Sparkles"
+color        = "#10b981"
+width        = 600
+height       = 400
