@@ -1,5 +1,5 @@
 {
-  "name": "@tokimo-app/person-ui",
+  "name": "@tokimo-app/helloworld-ui",
   "version": "0.1.0",
   "private": true,
   "type": "module",

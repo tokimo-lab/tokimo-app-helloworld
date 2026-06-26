@@ -5,7 +5,7 @@ use tokimo_bus_client::BusClient;
 use tokimo_bus_protocol::CallerCtx;
 use uuid::Uuid;
 
-use crate::error::AppError;
+use crate::handlers::AppError;
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Deserialize)]
@@ -31,7 +31,6 @@ pub struct JobView {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(dead_code)]
 pub struct CreateJobRequest {
     #[serde(rename = "kind")]
     pub job_type: String,
@@ -50,7 +49,6 @@ pub struct CreateJobRequest {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(dead_code)]
 pub struct UpdateStatusRequest {
     pub job_id: Uuid,
     pub status: String,
@@ -64,7 +62,6 @@ pub struct UpdateStatusRequest {
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-#[allow(dead_code)]
 struct UpdateProgressRequest {
     job_id: Uuid,
     progress: i32,
@@ -72,14 +69,12 @@ struct UpdateProgressRequest {
     data: Option<JsonValue>,
 }
 
-#[allow(dead_code)]
 pub async fn create(client: &BusClient, caller: CallerCtx, request: CreateJobRequest) -> Result<JobView, AppError> {
     let response = invoke_json(client, "create", caller, &request).await?;
     serde_json::from_slice::<JobView>(&response)
-        .map_err(|error| AppError::Internal(format!("jobs.create decode: {error}")))
+        .map_err(|error| AppError::internal(format!("jobs.create decode: {error}")))
 }
 
-#[allow(dead_code)]
 pub async fn update_status(
     client: &BusClient,
     caller: CallerCtx,
@@ -87,10 +82,9 @@ pub async fn update_status(
 ) -> Result<JobView, AppError> {
     let response = invoke_json(client, "update_status", caller, &request).await?;
     serde_json::from_slice::<JobView>(&response)
-        .map_err(|error| AppError::Internal(format!("jobs.update_status decode: {error}")))
+        .map_err(|error| AppError::internal(format!("jobs.update_status decode: {error}")))
 }
 
-#[allow(dead_code)]
 pub async fn update_progress(
     client: &BusClient,
     caller: CallerCtx,
@@ -105,10 +99,9 @@ pub async fn update_progress(
     };
     let response = invoke_json(client, "update_progress", caller, &req).await?;
     serde_json::from_slice::<JobView>(&response)
-        .map_err(|error| AppError::Internal(format!("jobs.update_progress decode: {error}")))
+        .map_err(|error| AppError::internal(format!("jobs.update_progress decode: {error}")))
 }
 
-#[allow(dead_code)]
 async fn invoke_json<T: Serialize>(
     client: &BusClient,
     method: &str,
@@ -116,9 +109,9 @@ async fn invoke_json<T: Serialize>(
     request: &T,
 ) -> Result<Vec<u8>, AppError> {
     let payload =
-        serde_json::to_vec(request).map_err(|error| AppError::Internal(format!("jobs.{method} encode: {error}")))?;
+        serde_json::to_vec(request).map_err(|error| AppError::internal(format!("jobs.{method} encode: {error}")))?;
     client
         .invoke("jobs", method, payload, caller)
         .await
-        .map_err(|error| AppError::Internal(format!("jobs.{method} via bus: {error}")))
+        .map_err(|error| AppError::internal(format!("jobs.{method} via bus: {error}")))
 }
