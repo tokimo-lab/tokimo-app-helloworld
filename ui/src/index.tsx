@@ -156,7 +156,7 @@ function HelloworldWindow({ ctx }: { ctx: AppRuntimeCtx }) {
 
   return (
     <div className="flex h-full w-full text-[var(--color-fg-primary)]">
-      <aside className="flex w-[240px] flex-col border-r border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.03]">
+      <aside className="app-safe-area flex w-[240px] flex-col border-r border-black/10 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.03]">
         <div className="flex items-center gap-2 border-b border-black/10 dark:border-white/10 px-3 py-3">
           <Sparkles size={18} style={{ color: "var(--color-accent)" }} />
           <div className="flex flex-col">
@@ -210,7 +210,7 @@ function HelloworldWindow({ ctx }: { ctx: AppRuntimeCtx }) {
         </nav>
       </aside>
 
-      <main className="flex-1 overflow-auto">
+      <main className="app-safe-area flex-1 overflow-auto bg-surface-base">
         <header className="sticky top-0 z-10 border-b border-black/10 dark:border-white/10 bg-surface-base/80 dark:bg-black/40 backdrop-blur px-6 py-4">
           <div className="text-[10px] uppercase tracking-wide opacity-50">
             {current.category}
